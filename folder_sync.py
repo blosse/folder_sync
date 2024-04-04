@@ -27,22 +27,23 @@ def sync_folders(src_folder, dst_folder) :
         #Check if dirs exist in dst_folder
         dst_dir = dir_names.replace(src_folder, dst_folder, 1)
 
-        if not os.path.isdir(dst_dir)
+        if not os.path.isdir(dst_dir) :
             os.makedirs(dst_dir)
 
         # Check if file exists in dst_dir
         for file in files :
             src_file = os.path.join(src_dir, file)
             dst_file = os.path.join(dst_dir, file)
-            if not os.path.exists(            
+            if not os.path.exists(dst_file) or os.stat(src_file).st_mtime > os.stat(src_file).st_mtime :
+                print("Something needs to be synced!")
            
 # Run the thing
 def main() :
     
     # Step 1: Receive CLI args
     parser = argparse.ArgumentParser(description='Synchronize folders.')
-    parser.add_argument('src', type=string, help='Source folder to sync from')
-    parser.add_argument('dst', type=string, help='Destination folder to sync to') 
+    parser.add_argument('src', type=str, help='Source folder to sync from')
+    parser.add_argument('dst', type=str, help='Destination folder to sync to') 
     parser.add_argument('interval', type=integer, help='Interval between syncs in seconds')
 
     args = parser.parse_arg()
