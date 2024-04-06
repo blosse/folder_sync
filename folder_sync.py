@@ -1,70 +1,119 @@
 ### Test task for internal development in QA team at Veeam ###
 
-# Step 1: Get CLI args
-# Step 2: Check that src and dst folders exist
-#         handle errors if not
-# Step 3: Walk src dir and compare with dst
-#         Handle missing file/dir
-#         Handle outdated file/dir
-# Step 4: Walk dst dir and check for files that
-#         should not exist
-# Step 5: Make sure sync function is called on
-#         correct interval
+# This program syncs all files in a source folder to a destination
+# on a given interval.
 
 import os
 import shutil
 import argparse
+import logging
+from time import sleep
 
-def check_files(src_dir, dst_dir, files) :
-        # Check if file exists in dst_dir
-        for file in files :
-            src_file = os.path.join(src_dir, file)
-            dst_file = os.path.join(dst_dir, file)
-            if not os.path.exists(dst_file) or os.stat(src_file).st_mtime > os.stat(src_file).st_mtime :
-                print("Something needs to be synced!")
-
-def sync_folders(src_folder, dst_folder) :
+def folders_exist(src_folder, dst_folder) :
     #Check that both folders exist
     if not os.path.isdir(src_folder) :
-        raise ValueError(f"Source folder {src_folder} not found")
+        logging.warningf(f"Source folder {src_folder} not found")
+        #raise ValueError(f"Source folder {src_folder} not found")
     if not os.path.isdir(dst_folder) :
-        os.makedirs(dst_folder)
+        try : 
+            os.makedirs(dst_folder)
+            logging.info(f"Destination folder not found, '{dst_folder}' generated")
+        except Exception as e :
+            logging.error(f"An error occurred: {str(e)}")
 
-    #Walk src dir
+def clean_folders(src_folder, dst_folder) :
+    #print(f"Removing outdated files from '{src_folder}'.")
+
     for src_dir, dir_names, files in os.walk(src_folder) :
-        #Check if dirs exist in dst_folder
+        
         for dir in dir_names :
-            dst_dir = os.path.join(dst_folder, dir)
-            print(f"Checking for dir: '{dst_dir}'")
+            src = os.path.join(src_dir, dir)
+            dst_dir = src.replace(src_folder, dst_folder, 1)
+            #print(f"Checking for dir: '{dst_dir}'")
 
             if not os.path.isdir(dst_dir) :
-                os.makedirs(dst_dir)
-                print(f"Dir not found, created new dir: {dst_dir}")
+                logging.debug(f"Directory: '{dst_dir}' not found, removing")
+                #print(f"Directory: '{dst_dir}' not found, removing")
+                try :
+                    shutil.rmtree(src)
+                    logging.info(f"Directory '{src}' successfully removed")
+                except Exception as e :
+                    logging.error(f"An error occurred when removing '{src}': {str(e)}")
 
         for file in files :
             src_file = os.path.join(src_dir, file)
             dst_file = src_file.replace(src_folder, dst_folder, 1)
-            print(f"Checking for file '{src_file}'")
+            #print(f"Checking for file '{dst_file}'")
 
-            if not os.path.exists(dst_file) or os.stat(src_file).st_mtime > os.stat(src_file).st_mtime :
-                print(f"File: '{dst_file}' not found")
-                file_path = shutil.copy2(src_file, dst_file)
-                print(f"Created file: '{file_path}'")
+            if not os.path.exists(dst_file) :
+                logging.debug(f"File: '{dst_file}' not found, removing")
+                try :
+                    os.remove(src_file)
+                    logging.info(f"File '{src_file}' removed")
+                except Exception as e :
+                    logging.error(f"An error occurred when removing '{src_file}': {str(e)}")
+                    
+def sync_folders(src_folder, dst_folder) :
+    #print(f"Syncing from '{src_folder}' to '{dst_folder}'.")    
 
-            #check_files(src_dir, dst_dir, files)
+    #Walk src directory and sync to dst
+    for src_dir, dir_names, files in os.walk(src_folder) :
+        #Check for directories in "current" directory
+        for dir in dir_names :
+            src = os.path.join(src_dir, dir)
+            dst_dir = src.replace(src_folder, dst_folder, 1)
+
+            if not os.path.isdir(dst_dir) :
+                try : 
+                    os.makedirs(dst_dir)
+                    logging.info(f"Directory '{dst_dir}' created")
+                except Exception as e :
+                    logging.error(f"An error occurred when creating '{dst_dir}': {str(e)}")
+
+        #Check for files in "current" directory
+        for file in files :
+            src_file = os.path.join(src_dir, file)
+            dst_file = src_file.replace(src_folder, dst_folder, 1)
+
+            if not os.path.exists(dst_file) :
+                logging.info(f"File: '{dst_file}' not found")
+                try :
+                    file_path = shutil.copy2(src_file, dst_file)
+                    logging.info(f" File: '{file_path}' created")
+                except Exception as e :
+                    logging.error(f"An error occurred when creating '{file_path}': {str(e)}") 
+
+            elif (os.stat(src_file).st_mtime > os.stat(dst_file).st_mtime) :
+                logging.debug(f"File: '{dst_file}' is outdated")
+                try :
+                    file_path = shutil.copy2(src_file, dst_file)
+                    logging.info(f"File: '{file_path}' updated")
+                except Exception as e :
+                    logging.error(f"An error occurred when updating '{file_path}': {str(e)}")
            
-# Run the thing
 def main() :
+
+    logging.basicConfig(filename="sync.log", format="%(asctime)s-%(levelname)s: %(message)s", datefmt="%H:%M:%S", level=logging.INFO)
     
-    # Step 1: Receive CLI args
+    #Handle CLI args
     parser = argparse.ArgumentParser(description='Synchronize folders.')
     parser.add_argument('src', type=str, help='Source folder to sync from')
     parser.add_argument('dst', type=str, help='Destination folder to sync to') 
     parser.add_argument('interval', type=int, help='Interval between syncs in seconds')
 
     args = parser.parse_args()
+    
+    while True :
+        #Make sure source and desitnation folders exist
+        folders_exist(args.src, args.dst)
+        #Remove files from dst that do not exist in src
+        clean_folders(args.dst, args.src)
+        #Sync src to dst
+        sync_folders(args.src, args.dst)
+        #Sleep until next interval
+        sleep(args.interval)
 
-    sync_folders(args.src, args.dst)
-
+# Run the thing
 if __name__ == "__main__" :
     main()
+
