@@ -94,6 +94,12 @@ def sync_folders(src_folder, dst_folder) :
 def main() :
 
     logging.basicConfig(filename="sync.log", format="%(asctime)s-%(levelname)s: %(message)s", datefmt="%H:%M:%S", level=logging.INFO)
+    logger = logging.getLogger(__name__)
+    console_handler = logging.StreamHandler()
+    file_handler = logging.FileHandler("sync.log")
+    logger.addHandler(console_handler)
+    logger.addHandler(file_handler)
+
     
     #Handle CLI args
     parser = argparse.ArgumentParser(description='Synchronize folders.')
