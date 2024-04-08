@@ -13,7 +13,7 @@ from time import sleep
 def folders_exist(src_folder, dst_folder) :
     if not os.path.isdir(src_folder) :
         logging.warning(f"Source folder {src_folder} not found")
-        #raise ValueError(f"Source folder {src_folder} not found")
+
     if not os.path.isdir(dst_folder) :
         try : 
             os.makedirs(dst_folder)
@@ -29,11 +29,9 @@ def clean_folders(src_folder, dst_folder) :
         for dir in dir_names :
             src = os.path.join(src_dir, dir)
             dst_dir = src.replace(src_folder, dst_folder, 1)
-            #print(f"Checking for dir: '{dst_dir}'")
 
             if not os.path.isdir(dst_dir) :
                 logging.debug(f"Directory: '{dst_dir}' not found, removing")
-                #print(f"Directory: '{dst_dir}' not found, removing")
                 try :
                     shutil.rmtree(src)
                     logging.info(f"Directory '{src}' removed")
@@ -44,7 +42,6 @@ def clean_folders(src_folder, dst_folder) :
         for file in files :
             src_file = os.path.join(src_dir, file)
             dst_file = src_file.replace(src_folder, dst_folder, 1)
-            #print(f"Checking for file '{dst_file}'")
 
             if not os.path.exists(dst_file) :
                 logging.debug(f"File: '{dst_file}' not found, removing")
@@ -75,6 +72,7 @@ def sync_folders(src_folder, dst_folder) :
             src_file = os.path.join(src_dir, file)
             dst_file = src_file.replace(src_folder, dst_folder, 1)
 
+            #If file does not exist
             if not os.path.exists(dst_file) :
                 logging.debug(f"File: '{dst_file}' not found")
                 try :
@@ -83,6 +81,7 @@ def sync_folders(src_folder, dst_folder) :
                 except Exception as e :
                     logging.error(f"An error occurred when creating '{file_path}': {str(e)}") 
 
+            #If file is outdated
             elif (os.stat(src_file).st_mtime > os.stat(dst_file).st_mtime) :
                 logging.debug(f"File: '{dst_file}' is outdated")
                 try :
