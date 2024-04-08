@@ -1,7 +1,7 @@
 ### Test task for internal development in QA team at Veeam ###
 
 # This program syncs all files in a source folder to a destination
-# on a given interval.
+# folder on a given interval.
 
 import os
 import shutil
@@ -9,10 +9,10 @@ import argparse
 import logging
 from time import sleep
 
+#Checks that source and destination folders exist
 def folders_exist(src_folder, dst_folder) :
-    #Check that both folders exist
     if not os.path.isdir(src_folder) :
-        logging.warningf(f"Source folder {src_folder} not found")
+        logging.warning(f"Source folder {src_folder} not found")
         #raise ValueError(f"Source folder {src_folder} not found")
     if not os.path.isdir(dst_folder) :
         try : 
@@ -21,11 +21,11 @@ def folders_exist(src_folder, dst_folder) :
         except Exception as e :
             logging.error(f"An error occurred: {str(e)}")
 
+#Removes all files and folders from src that do not exist in dst
 def clean_folders(src_folder, dst_folder) :
-    #print(f"Removing outdated files from '{src_folder}'.")
-
     for src_dir, dir_names, files in os.walk(src_folder) :
         
+        #Check for directories 
         for dir in dir_names :
             src = os.path.join(src_dir, dir)
             dst_dir = src.replace(src_folder, dst_folder, 1)
@@ -36,10 +36,11 @@ def clean_folders(src_folder, dst_folder) :
                 #print(f"Directory: '{dst_dir}' not found, removing")
                 try :
                     shutil.rmtree(src)
-                    logging.info(f"Directory '{src}' successfully removed")
+                    logging.info(f"Directory '{src}' removed")
                 except Exception as e :
                     logging.error(f"An error occurred when removing '{src}': {str(e)}")
 
+        #Check for files
         for file in files :
             src_file = os.path.join(src_dir, file)
             dst_file = src_file.replace(src_folder, dst_folder, 1)
@@ -53,12 +54,11 @@ def clean_folders(src_folder, dst_folder) :
                 except Exception as e :
                     logging.error(f"An error occurred when removing '{src_file}': {str(e)}")
                     
+#Copy or update all files and folders that exist in src to dst
 def sync_folders(src_folder, dst_folder) :
-    #print(f"Syncing from '{src_folder}' to '{dst_folder}'.")    
-
-    #Walk src directory and sync to dst
     for src_dir, dir_names, files in os.walk(src_folder) :
-        #Check for directories in "current" directory
+
+        #Check for directories 
         for dir in dir_names :
             src = os.path.join(src_dir, dir)
             dst_dir = src.replace(src_folder, dst_folder, 1)
@@ -70,16 +70,16 @@ def sync_folders(src_folder, dst_folder) :
                 except Exception as e :
                     logging.error(f"An error occurred when creating '{dst_dir}': {str(e)}")
 
-        #Check for files in "current" directory
+        #Check for files
         for file in files :
             src_file = os.path.join(src_dir, file)
             dst_file = src_file.replace(src_folder, dst_folder, 1)
 
             if not os.path.exists(dst_file) :
-                logging.info(f"File: '{dst_file}' not found")
+                logging.debug(f"File: '{dst_file}' not found")
                 try :
                     file_path = shutil.copy2(src_file, dst_file)
-                    logging.info(f" File: '{file_path}' created")
+                    logging.info(f"File: '{file_path}' created")
                 except Exception as e :
                     logging.error(f"An error occurred when creating '{file_path}': {str(e)}") 
 
@@ -91,24 +91,24 @@ def sync_folders(src_folder, dst_folder) :
                 except Exception as e :
                     logging.error(f"An error occurred when updating '{file_path}': {str(e)}")
            
-def main() :
-
-    logging.basicConfig(filename="sync.log", format="%(asctime)s-%(levelname)s: %(message)s", datefmt="%H:%M:%S", level=logging.INFO)
-    logger = logging.getLogger(__name__)
-    console_handler = logging.StreamHandler()
-    file_handler = logging.FileHandler("sync.log")
-    logger.addHandler(console_handler)
-    logger.addHandler(file_handler)
-
+# Run the thing
+if __name__ == "__main__" :
+    #Set up logging
+    logging.basicConfig(format="%(asctime)s-%(levelname)s: %(message)s",
+                        datefmt="%H:%M:%S",
+                        level=logging.INFO,
+                        handlers=[
+                            logging.FileHandler("sync.log"),
+                            logging.StreamHandler()])
     
     #Handle CLI args
     parser = argparse.ArgumentParser(description='Synchronize folders.')
     parser.add_argument('src', type=str, help='Source folder to sync from')
     parser.add_argument('dst', type=str, help='Destination folder to sync to') 
     parser.add_argument('interval', type=int, help='Interval between syncs in seconds')
-
     args = parser.parse_args()
     
+    #Sync
     while True :
         #Make sure source and desitnation folders exist
         folders_exist(args.src, args.dst)
@@ -118,8 +118,4 @@ def main() :
         sync_folders(args.src, args.dst)
         #Sleep until next interval
         sleep(args.interval)
-
-# Run the thing
-if __name__ == "__main__" :
-    main()
 
