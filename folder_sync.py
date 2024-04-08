@@ -21,14 +21,14 @@ def folders_exist(src_folder, dst_folder) :
         except Exception as e :
             logging.error(f"An error occurred: {str(e)}")
 
-#Removes all files and folders from src that do not exist in dst
+#Removes all files and folders from dst that do not exist in src
 def clean_folders(src_folder, dst_folder) :
-    for src_dir, dir_names, files in os.walk(src_folder) :
+    for root, dir_names, files in os.walk(dst_folder) :
         
         #Check for directories 
         for dir in dir_names :
-            src = os.path.join(src_dir, dir)
-            dst_dir = src.replace(src_folder, dst_folder, 1)
+            src = os.path.join(root, dir)
+            dst_dir = src.replace(dst_folder, src_folder, 1)
 
             if not os.path.isdir(dst_dir) :
                 logging.debug(f"Directory '{dst_dir}' not found, removing")
@@ -40,8 +40,8 @@ def clean_folders(src_folder, dst_folder) :
 
         #Check for files
         for file in files :
-            src_file = os.path.join(src_dir, file)
-            dst_file = src_file.replace(src_folder, dst_folder, 1)
+            src_file = os.path.join(root, file)
+            dst_file = src_file.replace(dst_folder, src_folder, 1)
 
             if not os.path.exists(dst_file) :
                 logging.debug(f"File '{dst_file}' not found, removing")
@@ -53,11 +53,11 @@ def clean_folders(src_folder, dst_folder) :
                     
 #Copy or update all files and folders that exist in src to dst
 def sync_folders(src_folder, dst_folder) :
-    for src_dir, dir_names, files in os.walk(src_folder) :
+    for root, dir_names, files in os.walk(src_folder) :
 
         #Check for directories 
         for dir in dir_names :
-            src = os.path.join(src_dir, dir)
+            src = os.path.join(root, dir)
             dst_dir = src.replace(src_folder, dst_folder, 1)
 
             if not os.path.isdir(dst_dir) :
@@ -69,7 +69,7 @@ def sync_folders(src_folder, dst_folder) :
 
         #Check for files
         for file in files :
-            src_file = os.path.join(src_dir, file)
+            src_file = os.path.join(root, file)
             dst_file = src_file.replace(src_folder, dst_folder, 1)
 
             #If file does not exist
@@ -112,7 +112,7 @@ if __name__ == "__main__" :
         #Make sure source and desitnation folders exist
         folders_exist(args.src, args.dst)
         #Remove files from dst that do not exist in src
-        clean_folders(args.dst, args.src)
+        clean_folders(args.src, args.dst)
         #Sync src to dst
         sync_folders(args.src, args.dst)
         #Sleep until next interval
