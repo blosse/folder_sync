@@ -31,7 +31,7 @@ def clean_folders(src_folder, dst_folder) :
             dst_dir = src.replace(src_folder, dst_folder, 1)
 
             if not os.path.isdir(dst_dir) :
-                logging.debug(f"Directory: '{dst_dir}' not found, removing")
+                logging.debug(f"Directory '{dst_dir}' not found, removing")
                 try :
                     shutil.rmtree(src)
                     logging.info(f"Directory '{src}' removed")
@@ -44,7 +44,7 @@ def clean_folders(src_folder, dst_folder) :
             dst_file = src_file.replace(src_folder, dst_folder, 1)
 
             if not os.path.exists(dst_file) :
-                logging.debug(f"File: '{dst_file}' not found, removing")
+                logging.debug(f"File '{dst_file}' not found, removing")
                 try :
                     os.remove(src_file)
                     logging.info(f"File '{src_file}' removed")
@@ -74,19 +74,19 @@ def sync_folders(src_folder, dst_folder) :
 
             #If file does not exist
             if not os.path.exists(dst_file) :
-                logging.debug(f"File: '{dst_file}' not found")
+                logging.debug(f"File '{dst_file}' not found")
                 try :
                     file_path = shutil.copy2(src_file, dst_file)
-                    logging.info(f"File: '{file_path}' created")
+                    logging.info(f"File '{file_path}' created")
                 except Exception as e :
                     logging.error(f"An error occurred when creating '{file_path}': {str(e)}") 
 
             #If file is outdated
             elif (os.stat(src_file).st_mtime > os.stat(dst_file).st_mtime) :
-                logging.debug(f"File: '{dst_file}' is outdated")
+                logging.debug(f"File '{dst_file}' is outdated")
                 try :
                     file_path = shutil.copy2(src_file, dst_file)
-                    logging.info(f"File: '{file_path}' updated")
+                    logging.info(f"File '{file_path}' updated")
                 except Exception as e :
                     logging.error(f"An error occurred when updating '{file_path}': {str(e)}")
            
