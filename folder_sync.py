@@ -29,29 +29,29 @@ def clean_folders(src_folder, dst_folder):
         
         #Check for directories 
         for folder in folder_names:
-            src = os.path.join(root, folder)
-            dst_dir = src.replace(dst_folder, src_folder, 1)
+            dst = os.path.join(root, folder)
+            dst_dir = dst.replace(dst_folder, src_folder, 1)
 
             if not os.path.isdir(dst_folder):
                 logging.debug(f"Folder '{dst_folder}' not found, removing")
                 try:
-                    shutil.rmtree(src)
-                    logging.info(f"Folder '{src}' removed")
+                    shutil.rmtree(dst)
+                    logging.info(f"Folder '{dst}' removed")
                 except Exception as e:
-                    logging.error(f"An error occurred when removing '{src}': {str(e)}")
+                    logging.error(f"An error occurred when removing '{dst}': {str(e)}")
 
         #Check for files
         for file in files:
-            src_file = os.path.join(root, file)
-            dst_file = src_file.replace(dst_folder, src_folder, 1)
+            dst_file = os.path.join(root, file)
+            src_file = src_file.replace(dst_folder, src_folder, 1)
 
-            if not os.path.exists(dst_file):
-                logging.debug(f"File '{dst_file}' not found, removing")
+            if not os.path.exists(src_file):
+                logging.debug(f"File '{src_file}' not found, removing")
                 try:
-                    os.remove(src_file)
-                    logging.info(f"File '{src_file}' removed")
+                    os.remove(dst_file)
+                    logging.info(f"File '{dst_file}' removed")
                 except Exception as e:
-                    logging.error(f"An error occurred when removing '{src_file}': {str(e)}")
+                    logging.error(f"An error occurred when removing '{dst_file}': {str(e)}")
                     
 #Copy or update all files and folders that exist in src to dst
 def sync_folders(src_folder, dst_folder):
