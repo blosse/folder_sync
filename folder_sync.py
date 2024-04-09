@@ -1,9 +1,9 @@
-#!/usr/bin/python3
+#!/usr/bin/env python3
 
 ### Test task for internal development in QA team at Veeam ###
 
-#This program syncs all files in a source folder to a destination
-#folder on a given interval.
+#This program syncs all files in a source folder and its nested folders 
+#to a destination folder on a given interval.
 
 import os
 import shutil
@@ -12,7 +12,7 @@ import logging
 from time import sleep
 
 #Checks that source and destination folders exist
-def folders_exist(src_folder, dst_folder):
+def folders_exist(src_folder: str, dst_folder: str) -> None:
     if not os.path.isdir(src_folder):
         logging.warning(f"Source folder {src_folder} not found")
 
@@ -24,7 +24,7 @@ def folders_exist(src_folder, dst_folder):
             logging.error(f"An error occurred: {str(e)}")
 
 #Removes all files and folders from dst that do not exist in src
-def clean_folders(src_folder, dst_folder):
+def clean_folders(src_folder: str, dst_folder: str) -> None:
     for root, folder_names, files in os.walk(dst_folder):
         
         #Check for directories 
@@ -43,7 +43,7 @@ def clean_folders(src_folder, dst_folder):
         #Check for files
         for file in files:
             dst_file = os.path.join(root, file)
-            src_file = src_file.replace(dst_folder, src_folder, 1)
+            src_file = dst_file.replace(dst_folder, src_folder, 1)
 
             if not os.path.exists(src_file):
                 logging.debug(f"File '{src_file}' not found, removing")
@@ -54,7 +54,7 @@ def clean_folders(src_folder, dst_folder):
                     logging.error(f"An error occurred when removing '{dst_file}': {str(e)}")
                     
 #Copy or update all files and folders that exist in src to dst
-def sync_folders(src_folder, dst_folder):
+def sync_folders(src_folder: str, dst_folder: str) -> None:
     for root, folder_names, files in os.walk(src_folder):
 
         #Check for directories 
@@ -94,21 +94,22 @@ def sync_folders(src_folder, dst_folder):
            
 # Run the thing
 if __name__ == "__main__":
+    #Handle CLI args
+    parser = argparse.ArgumentParser(description='Synchronize folders')
+    parser.add_argument('src', type=str, help='Source folder to sync from')
+    parser.add_argument('dst', type=str, help='Destination folder to sync to') 
+    parser.add_argument('log', type=str, help='Path to log file')
+    parser.add_argument('interval', type=int, help='Interval between syncs in seconds')
+    args = parser.parse_args()
+    
     #Set up logging
     logging.basicConfig(format="%(asctime)s-%(levelname)s: %(message)s",
                         datefmt="%H:%M:%S",
                         level=logging.INFO,
                         handlers=[
-                            logging.FileHandler("sync.log"),
+                            logging.FileHandler(args.log),
                             logging.StreamHandler()])
-    
-    #Handle CLI args
-    parser = argparse.ArgumentParser(description='Synchronize folders.')
-    parser.add_argument('src', type=str, help='Source folder to sync from')
-    parser.add_argument('dst', type=str, help='Destination folder to sync to') 
-    parser.add_argument('interval', type=int, help='Interval between syncs in seconds')
-    args = parser.parse_args()
-    
+
     #Sync
     while True:
         #Make sure source and desitnation folders exist
